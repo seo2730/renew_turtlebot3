@@ -3,10 +3,10 @@
 
 #define NAME                             "Burger"
 
-#define WHEEL_RADIUS                     0.05            // cas_meter
+#define WHEEL_RADIUS                     0.033           // meter
 #define WHEEL_SEPARATION                 0.160           // meter (BURGER : 0.160, WAFFLE : 0.287)
-#define TURNING_RADIUS                   0.090           // meter (CAS: 0.085, BURGER : 0.080, WAFFLE : 0.1435)
-#define ROBOT_RADIUS                     0.150           // meter (CAS:0.150, BURGER : 0.105, WAFFLE : 0.220)
+#define TURNING_RADIUS                   0.080           // meter (BURGER : 0.080, WAFFLE : 0.1435)
+#define ROBOT_RADIUS                     0.105           // meter (BURGER : 0.105, WAFFLE : 0.220)
 #define ENCODER_MIN                      -2147483648     // raw
 #define ENCODER_MAX                      2147483648      // raw
 
@@ -16,4 +16,4 @@
 #define MIN_LINEAR_VELOCITY              -MAX_LINEAR_VELOCITY  
 #define MIN_ANGULAR_VELOCITY             -MAX_ANGULAR_VELOCITY 
 
-#endif
+#endif  //TURTLEBOT3_BURGER_H_
