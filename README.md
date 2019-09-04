@@ -1,7 +1,6 @@
 # renew_turtlebot3(Not complete)
 Using another board instead of OpenCr<br>
-I use cortex-M4 board
-You can also use Arduino board
+I use cortex-M4 board. You can also use Arduino board. I first test in Arduino Mega2560
 
 # romillion_robot.h
 This header file is to define your robot state
