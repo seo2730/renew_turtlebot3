@@ -38,7 +38,7 @@ There are a lot of header files, functions and variables.<br><br>
 **f401reMap.h** is the header file of cotex
 Reference : https://www.instructables.com/id/Quick-Start-to-STM-Nucleo-on-Arduino-IDE/
 
-**MOTOR**
+### MOTOR
 Motor : Encoder motor GM36F-3657E DC12V<br>
 Motor drive : DMC-16<br>
 
