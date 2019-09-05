@@ -6,23 +6,23 @@ I use cortex-M4 board. You can also use Arduino board. I first tested in Arduino
 This header file is to define your robot state
 
     #define NAME                             "Burger"
-Define your robot name.
+Define your robot name.<br>
 
     #define WHEEL_RADIUS                     0.033           // meter
-Define your robot wheel radius.
+Define your robot wheel radius.<br>
 
     #define WHEEL_SEPARATION                 0.160           // meter (BURGER : 0.160, WAFFLE : 0.287)
-wheel speration = (turning radius)x2
+wheel speration = (turning radius)x2<br>
 
     #define TURNING_RADIUS                   0.080           // meter (BURGER : 0.080, WAFFLE : 0.1435)
-Your robot turning radius(NOT WHEEL RADIUS)
+Your robot turning radius(NOT WHEEL RADIUS)<br>
 
     #define ROBOT_RADIUS                     0.105           // meter (BURGER : 0.105, WAFFLE : 0.220)
-Your robot radius + wheel thickness
+Your robot radius + wheel thickness<br>
 
     #define ENCODER_MIN                      -2147483648     // raw
     #define ENCODER_MAX                      2147483648      // raw
-Defing encoder min and max
+Defing encoder min and max<br>
 
     #define MAX_LINEAR_VELOCITY              (WHEEL_RADIUS * 2 * 3.14159265359 * 61 / 60) // m/s  (BURGER : 61[rpm], WAFFLE : 77[rpm])
     #define MAX_ANGULAR_VELOCITY             (MAX_LINEAR_VELOCITY / TURNING_RADIUS)       // rad/s
