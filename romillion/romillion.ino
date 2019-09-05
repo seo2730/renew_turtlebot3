@@ -1,5 +1,4 @@
 #include "romillion_core.h"
-
 /*******************************************************************************
 * Setup function
 *******************************************************************************/
@@ -8,6 +7,18 @@ void setup()
   Serial.begin(57600);
   motor_init(); // MOTOR SETTING
   imu_init();   // MPU9250 SETTING
+
+  pinMode(button0,INPUT);
+  pinMode(button1,INPUT);
+  pinMode(button2,INPUT);
+
+  digitalWrite(button0,HIGH);
+  digitalWrite(button1,HIGH);
+  digitalWrite(button2,HIGH);
+
+  last_reading0 != digitalRead(button0);
+  last_reading1 != digitalRead(button1);
+  last_reading2 != digitalRead(button2);
 
   // Initialize ROS node handle, advertise and subscribe the topics
   nh.initNode();
@@ -23,6 +34,9 @@ void setup()
   nh.advertise(odom_pub);
   nh.advertise(joint_states_pub);
   nh.advertise(mag_pub);
+
+  nh.advertise(sensor);
+  nh.advertise(button); 
 
   tf_broadcaster.init(nh);
 
@@ -86,6 +100,9 @@ void loop()
     tTime[5] = t;
   }
 #endif
+
+  //button
+  push_button();
   
   // Send log message after ROS connection
   sendLogMsg();
@@ -101,6 +118,52 @@ void loop()
 
   // Wait the serial link time to process
   waitForSerialLink(nh.connected());
+}
+
+/*******************************************************************************
+* BUTTON
+*******************************************************************************/
+void push_button()
+{
+  bool reading0=!digitalRead(button0),reading1=!digitalRead(button1),reading2=!digitalRead(button2);
+       //reading3=!digitalRead(button3),reading4=!digitalRead(button4);
+
+  if (last_reading0 != reading0 || last_reading1 != reading1 || last_reading2 != reading2 )//|| last_reading3 != reading3 || last_reading4 != reading4)
+  {
+      last_debounce_time = millis();
+      published = false;
+  }
+  
+  //if the button value has not changed for the debounce delay, we know its stable
+  if (!published && (millis() - last_debounce_time)  > debounce_delay)
+  {
+      button_msg.button0=reading0;
+      button_msg.button1=reading1;
+      button_msg.button2=reading2;
+      //button_msg.button3=reading3;
+      //button_msg.button4=reading4;
+      if(button_msg.button1==1)
+      {
+        switch(count)
+        {
+          case 0:analogWrite(pan_pwm,85);count++;break;
+          case 1:analogWrite(pan_pwm,170);count++;break;
+          case 2:analogWrite(pan_pwm,255);count++;break;
+          case 3:analogWrite(pan_pwm,ran);count++;break;
+          case 4:analogWrite(pan_pwm,0);count=0;break;
+        }
+      }
+      button.publish(&button_msg);
+      published = true;
+  }
+    if(count==4)
+      analogWrite(pan_pwm,ran);
+      
+    last_reading0 = reading0;
+    last_reading1 = reading1;
+    last_reading2 = reading2;
+    //last_reading3 = reading3;
+    //last_reading4 = reading4;
 }
 
 /*******************************************************************************
@@ -140,54 +203,55 @@ void doMotor_L(bool dir1,bool dir2,int vel){
 }
 
 /*******************************************************************************
-* Motor speed control(속도 수정)
+* Motor speed control
 *******************************************************************************/
 void motor_speed(float x,float z)
 {
-  if(x>=0){
-      cw_R_dir= LOW;
-      ccw_R_dir= HIGH;
-      cw_L_dir= LOW; 
-      ccw_L_dir= LOW;
-      speed_R=x*1000+z*100;     
-      speed_L=x*1000-z*100; 
-  }
-  else{
-      cw_R_dir= LOW;
-      ccw_R_dir= LOW;
-      cw_L_dir= LOW;
-      ccw_L_dir= HIGH;      
-      speed_R=-x*1000+z*100;     
-      speed_L=-x*1000-z*100;
+  d_R=x*500+z*50;     
+  d_L=x*500-z*50;
+  speed_R=abs(x*500+z*50);     
+  speed_L=abs(x*500-z*50);
+
+  if(d_R>0 & d_L>0)
+  {
+    cw_R_dir= LOW;
+    ccw_R_dir= HIGH;
+    cw_L_dir= LOW; 
+    ccw_L_dir= LOW;
   }
 
-  if(x==0){
-    if(z>0){
-      cw_R_dir= LOW;
-      ccw_R_dir= HIGH;
-      cw_L_dir= LOW; 
-      ccw_L_dir= HIGH;
-      speed_R=z*100;     
-      speed_L=z*100; 
-    }
-    else if(z<0){
-      cw_R_dir= LOW;
-      ccw_R_dir= LOW;
-      cw_L_dir= LOW; 
-      ccw_L_dir= LOW;
-      speed_R=-z*100;     
-      speed_L=-z*100; 
-    }
-
-    else if(z==0)
-    {
-      speed_R=0;     
-      speed_L=0; 
-    }
+  else if(d_R>0 & d_L<0)
+  {
+    cw_R_dir= LOW;
+    ccw_R_dir= HIGH;
+    cw_L_dir= LOW; 
+    ccw_L_dir= HIGH;
   }
 
-  speed_R=constrain(speed_R,0,255);
-  speed_L=constrain(speed_L,0,255);
+  else if(d_R<0 & d_L>0)
+  {
+    cw_R_dir= LOW;
+    ccw_R_dir= LOW;
+    cw_L_dir= LOW; 
+    ccw_L_dir= LOW;
+  }
+
+  else if(d_R<0 & d_L<0)
+  {
+    cw_R_dir= LOW;
+    ccw_R_dir= LOW;
+    cw_L_dir= LOW; 
+    ccw_L_dir= HIGH;
+  }
+
+  else if(d_R==0 & d_L==0)
+  {
+    speed_R=0;
+    speed_L=0;
+  }
+  
+ speed_R=constrain(speed_R,0,255);
+ speed_L=constrain(speed_L,0,255);
 }
 
 /*******************************************************************************
@@ -272,28 +336,29 @@ void imu_init(void)
     while(1) {}
   }
 
-  // setting the accelerometer full scale range to +/-2G 
-  IMU.setAccelRange(MPU9250::ACCEL_RANGE_2G);
+  // setting the accelerometer full scale range to +/-8G 
+  IMU.setAccelRange(MPU9250::ACCEL_RANGE_4G);
   // setting the gyroscope full scale range to +/-2000 deg/s
   IMU.setGyroRange(MPU9250::GYRO_RANGE_2000DPS);
-  // setting DLPF bandwidth to 41 Hz
-  IMU.setDlpfBandwidth(MPU9250::DLPF_BANDWIDTH_41HZ);
+  // setting DLPF bandwidth to 184 Hz
+  IMU.setDlpfBandwidth(MPU9250::DLPF_BANDWIDTH_184HZ);
   // setting SRD to 19 for a 50 Hz update rate
-  IMU.setSrd(19);
+  IMU.setSrd(0);
 }
 
 void updateMPU(void)
 {
   IMU.readSensor();
 
-  //상보필터 
-  gyro_X=0.02*IMU.getGyroX_rads()+0.98*com_gx;
-  gyro_Y=0.02*IMU.getGyroY_rads()+0.98*com_gy;
-  gyro_Z=0.02*IMU.getGyroZ_rads()+0.98*com_gz;
+  //상보필터
+  
+  gyro_X=0.95*IMU.getGyroX_rads()+0.05*com_gx;
+  gyro_Y=0.95*IMU.getGyroY_rads()+0.05*com_gy;
+  gyro_Z=0.95*IMU.getGyroZ_rads()+0.05*com_gz;
 
-  acc_X=0.1*IMU.getAccelX_mss()+0.9*com_ax;
-  acc_Y=0.1*IMU.getAccelY_mss()+0.9*com_ay;
-  acc_Z=0.1*IMU.getAccelZ_mss()+0.9*com_az;
+  acc_X=0.05*IMU.getAccelX_mss()+0.95*com_ax;
+  acc_Y=0.05*IMU.getAccelY_mss()+0.95*com_ay;
+  acc_Z=0.05*IMU.getAccelZ_mss()+0.95*com_az;
 
   com_gx=IMU.getGyroX_rads();
   com_gy=IMU.getGyroY_rads();
@@ -302,7 +367,7 @@ void updateMPU(void)
   com_ax=IMU.getAccelX_mss();
   com_ay=IMU.getAccelY_mss();
   com_az=IMU.getAccelZ_mss();
-
+  
   mag_X=IMU.getMagX_uT();
   mag_Y=IMU.getMagY_uT();
   mag_Z=IMU.getMagZ_uT();

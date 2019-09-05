@@ -24,6 +24,9 @@
 #include "MPU9250.h"
 #include "romillion_robot.h"
 
+#include <arduino_ros/arduino.h>
+#include <arduino_ros/button.h>
+
 #include <math.h>
 
 ///////// TURTLEBOT3 //////////////////
@@ -53,35 +56,6 @@
 #define TEST_DISTANCE                    0.300     // meter
 #define TEST_RADIAN                      3.14      // 180 degree
 
-/////////////// MPU9250 ///////////////////////
-#define sampleFreqDef   512.0f
-
-// an MPU9250 object with the MPU-9250 sensor on I2C bus 0 with address 0x68
-MPU9250 IMU(Wire,0x68);
-int status;
-
-void imu_init();
-void updateMPU(void);
-void MadgwickQuaternionUpdate(float ax, float ay, float az, float gx, float gy, float gz);
-
-sensor_msgs::Imu getIMU(void);
-sensor_msgs::MagneticField getMag(void);
-sensor_msgs::Imu           imu_msg_;
-sensor_msgs::MagneticField mag_msg_;
-
-float gyro_X,gyro_Y,gyro_Z;
-float acc_X,acc_Y,acc_Z;
-float mag_X,mag_Y,mag_Z;
-float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};
-float deltat = 0.0f, sum = 0.0f;   
-uint32_t lastUpdate = 0; // used to calculate integration interval
-uint32_t Now = 0;        // used to calculate integration interval
-uint32_t sumCount = 0;
-static float com_ax=0,com_ay=0,com_az=0,com_gx=0,com_gy=0,com_gz=0;
-
-float invSampleFreq = 1.0f / sampleFreqDef;
-float beta = 0.1f;//sqrt(3.0f / 4.0f) * GyroMeasError;   // compute beta
-
 /////////////// MOTOR ///////////////////////
 #define cw_R 7
 #define ccw_R 6
@@ -90,22 +64,12 @@ float beta = 0.1f;//sqrt(3.0f / 4.0f) * GyroMeasError;   // compute beta
 #define ccw_L 10
 #define pwm_L 9
 
-//encoder interrupt pin
-int encoder0PinA_L= pinMap(18);
-int encoder0PinB_L = pinMap(19);
-int encoder0PinA_R = pinMap(16);
-int encoder0PinB_R = pinMap(17);
+/////////////// MPU9250 ///////////////////////
+#define sampleFreqDef   512.0f
+#define MAF_MAX 3.0
 
-int encoder0Pos_R = 0,encoder0Pos_L = 0;
-int prev_encoder_R=0, prev_encoder_L=0;
-const float ratio =360./56./26.;//1456 pulse
 
-int speed_R,speed_L;
-
-bool ccw_R_dir,cw_R_dir;
-bool ccw_L_dir,cw_L_dir;
-
-/////////////// TURTLEBOT3 ///////////////////////
+/////////////// FUNCTION & VARIBALE ///////////////////////
 
 // Callback function prototypes
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg);
@@ -140,6 +104,13 @@ bool calcOdometry(double diff_time);
 void sendLogMsg(void);
 void waitForSerialLink(bool isConnected);
 
+/////////////// MPU9250 ///////////////////////
+void imu_init();
+void updateMPU(void);
+void MadgwickQuaternionUpdate(float ax, float ay, float az, float gx, float gy, float gz);
+
+/////////////// BUTTON ///////////////////////
+void push_button();
 
 /*******************************************************************************
 * ROS NodeHandle
@@ -161,6 +132,77 @@ char imu_frame_id[30];
 char mag_frame_id[30];
 
 char joint_state_header_frame_id[30];
+
+/*******************************************************************************
+* MPU9250
+*******************************************************************************/
+// an MPU9250 object with the MPU-9250 sensor on I2C bus 0 with address 0x68
+MPU9250 IMU(Wire,0x68);
+int status;
+
+sensor_msgs::Imu getIMU(void);
+sensor_msgs::MagneticField getMag(void);
+sensor_msgs::Imu           imu_msg_;
+sensor_msgs::MagneticField mag_msg_;
+
+float gyro_X,gyro_Y,gyro_Z;
+float acc_X,acc_Y,acc_Z;
+float mag_X,mag_Y,mag_Z;
+float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};
+float deltat = 0.0f, sum = 0.0f;   
+uint32_t lastUpdate = 0; // used to calculate integration interval
+uint32_t Now = 0;        // used to calculate integration interval
+uint32_t sumCount = 0;
+static float com_ax=0,com_ay=0,com_az=0,com_gx=0,com_gy=0,com_gz=0;
+
+float invSampleFreq = 1.0f / sampleFreqDef;
+float beta = 0.1f;//sqrt(3.0f / 4.0f) * GyroMeasError;   // compute beta
+
+/*******************************************************************************
+* MOTOR
+*******************************************************************************/
+
+//encoder interrupt pin
+int encoder0PinA_L= pinMap(18);
+int encoder0PinB_L = pinMap(19);
+int encoder0PinA_R = pinMap(16);
+int encoder0PinB_R = pinMap(17);
+
+int encoder0Pos_R = 0,encoder0Pos_L = 0;
+int prev_encoder_R=0, prev_encoder_L=0;
+const float ratio =360./56./26.;//1456 pulse
+
+int speed_R,speed_L,d_R,d_L;
+static int mode=0;
+
+bool ccw_R_dir,cw_R_dir;
+bool ccw_L_dir,cw_L_dir;
+
+/*******************************************************************************
+* BUTTON & SENSOR
+*******************************************************************************/
+arduino_ros::arduino sensor_msg;
+arduino_ros::button button_msg;
+
+ros::Publisher sensor("adc", &sensor_msg);
+ros::Publisher button("pushed", &button_msg);
+
+//dust sensor 변수 
+const int dust_led_pin=40;
+
+//button 변수 
+int button0=pinMap(24);
+int button1=pinMap(25);
+int button2=pinMap(26);//button3=46,button4=44;
+bool last_reading0,last_reading1,last_reading2,last_reading3,last_reading4,published = true;
+long last_debounce_time=0,debounce_delay=50;
+static int count=0;
+
+//motor 변수(FAN)
+const int motor_cw = 22;
+const int motor_ccw = 24;
+const int pan_pwm = 2;
+static int ran;
 
 /*******************************************************************************
 * Subscriber
@@ -229,7 +271,6 @@ float zero_velocity[WHEEL_NUM] = {0.0, 0.0};
 float goal_velocity[WHEEL_NUM] = {0.0, 0.0};
 float goal_velocity_from_button[WHEEL_NUM] = {0.0, 0.0};
 float goal_velocity_from_cmd[WHEEL_NUM] = {0.0, 0.0};
-float goal_velocity_from_rc100[WHEEL_NUM] = {0.0, 0.0};
 
 /*******************************************************************************
 * Declaration for SLAM and navigation
