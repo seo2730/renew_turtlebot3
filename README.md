@@ -34,7 +34,7 @@ Define min and max of encoder, linear velocity and angular velocity<br>
 # romillion_core.h
 There are a lot of header files, functions and variables.<br><br>
 
-**f401reMap.h**
+### f401reMap.h
 **f401reMap.h** is the header file of cotex
 Reference : https://www.instructables.com/id/Quick-Start-to-STM-Nucleo-on-Arduino-IDE/
 
@@ -68,7 +68,7 @@ To define cw,ccw direction
 
     bool ccw_R_dir,cw_R_dir;
     bool ccw_L_dir,cw_L_dir;
-**MPU9250.h**
+### MPU9250.h
 **MPU9250.h** is the header file of MPU9250
 Reference : https://github.com/bolderflight/MPU9250<br>
 
