@@ -207,41 +207,41 @@ void doMotor_L(bool dir1,bool dir2,int vel){
 *******************************************************************************/
 void motor_speed(float x,float z)
 {
-  d_R=x*500+z*50;     
-  d_L=x*500-z*50;
-  speed_R=abs(x*500+z*50);     
-  speed_L=abs(x*500-z*50);
+  d_R=x*400+z*40;     
+  d_L=x*400-z*40;
+  speed_R=abs(x*400-z*40);     
+  speed_L=abs(x*400+z*40);
 
   if(d_R>0 & d_L>0)
   {
-    cw_R_dir= LOW;
-    ccw_R_dir= HIGH;
-    cw_L_dir= LOW; 
-    ccw_L_dir= LOW;
+    cw_L_dir= LOW;
+    ccw_L_dir= HIGH;
+    cw_R_dir= LOW; 
+    ccw_R_dir= LOW;
   }
 
   else if(d_R>0 & d_L<0)
   {
-    cw_R_dir= LOW;
-    ccw_R_dir= HIGH;
-    cw_L_dir= LOW; 
+    cw_L_dir= LOW;
     ccw_L_dir= HIGH;
+    cw_R_dir= LOW; 
+    ccw_R_dir= HIGH;
   }
 
   else if(d_R<0 & d_L>0)
   {
-    cw_R_dir= LOW;
-    ccw_R_dir= LOW;
-    cw_L_dir= LOW; 
+    cw_L_dir= LOW;
     ccw_L_dir= LOW;
+    cw_R_dir= LOW; 
+    ccw_R_dir= LOW;
   }
 
   else if(d_R<0 & d_L<0)
   {
-    cw_R_dir= LOW;
-    ccw_R_dir= LOW;
-    cw_L_dir= LOW; 
-    ccw_L_dir= HIGH;
+    cw_L_dir= LOW;
+    ccw_L_dir= LOW;
+    cw_R_dir= LOW; 
+    ccw_R_dir= HIGH;
   }
 
   else if(d_R==0 & d_L==0)
@@ -351,14 +351,13 @@ void updateMPU(void)
   IMU.readSensor();
 
   //상보필터
+  acc_X=0.05*IMU.getAccelX_mss()+0.95*com_ax;
+  acc_Y=0.05*IMU.getAccelY_mss()+0.95*com_ay;
+  acc_Z=0.05*IMU.getAccelZ_mss()+0.95*com_az;
   
   gyro_X=0.95*IMU.getGyroX_rads()+0.05*com_gx;
   gyro_Y=0.95*IMU.getGyroY_rads()+0.05*com_gy;
   gyro_Z=0.95*IMU.getGyroZ_rads()+0.05*com_gz;
-
-  acc_X=0.05*IMU.getAccelX_mss()+0.95*com_ax;
-  acc_Y=0.05*IMU.getAccelY_mss()+0.95*com_ay;
-  acc_Z=0.05*IMU.getAccelZ_mss()+0.95*com_az;
 
   com_gx=IMU.getGyroX_rads();
   com_gy=IMU.getGyroY_rads();
@@ -399,7 +398,8 @@ void MadgwickQuaternionUpdate(float ax, float ay, float az, float gx, float gy, 
 
   // Normalise accelerometer measurement
   norm = sqrtf(ax * ax + ay * ay + az * az);
-  if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))){ //return; // handle NaN
+  if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f)))
+  {
       norm = 1.0f/norm;
       ax *= norm;
       ay *= norm;
@@ -458,7 +458,7 @@ void calibrationGyro()
 
 sensor_msgs::Imu getIMU(void)
 {
-  imu_msg_.angular_velocity.x =  gyro_X;
+  imu_msg_.angular_velocity.x = gyro_X;
   imu_msg_.angular_velocity.y = gyro_Y;
   imu_msg_.angular_velocity.z = gyro_Z;
   imu_msg_.angular_velocity_covariance[0] = 0.02;
@@ -994,7 +994,7 @@ void sendLogMsg(void)
       sprintf(log_msg, "--------------------------");
       nh.loginfo(log_msg);
 
-      sprintf(log_msg, "Connected to OpenCR board!");
+      sprintf(log_msg, "Connected to cortex-M4!");
       nh.loginfo(log_msg);
 
       sprintf(log_msg, init_log_data);

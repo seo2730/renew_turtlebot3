@@ -23,6 +23,7 @@
 #include <f401reMap.h>
 #include "MPU9250.h"
 #include "romillion_robot.h"
+#include <Kalman.h>
 
 #include <arduino_ros/arduino.h>
 #include <arduino_ros/button.h>
@@ -68,9 +69,7 @@
 #define sampleFreqDef   512.0f
 #define MAF_MAX 3.0
 
-
 /////////////// FUNCTION & VARIBALE ///////////////////////
-
 // Callback function prototypes
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg);
 void motorPowerCallback(const std_msgs::Bool& power_msg);
@@ -139,6 +138,8 @@ char joint_state_header_frame_id[30];
 // an MPU9250 object with the MPU-9250 sensor on I2C bus 0 with address 0x68
 MPU9250 IMU(Wire,0x68);
 int status;
+
+Kalman acX,acY,acZ,gyX,gyY,gyZ;
 
 sensor_msgs::Imu getIMU(void);
 sensor_msgs::MagneticField getMag(void);

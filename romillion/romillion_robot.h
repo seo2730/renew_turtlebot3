@@ -1,11 +1,11 @@
 #ifndef ROMILLION_ROBOT_H_
 #define ROMILLION_ROBOT_H_
 
-#define NAME                             "Burger"
+#define NAME                             "Waffle or Waffle Pi"
 
-#define WHEEL_RADIUS                     0.65           // meter
-#define WHEEL_SEPARATION                 0.28           // meter 
-#define TURNING_RADIUS                   0.14           // meter 
+#define WHEEL_RADIUS                     0.065           // meter
+#define WHEEL_SEPARATION                 0.280           // meter 
+#define TURNING_RADIUS                   0.140           // meter 
 #define ROBOT_RADIUS                     0.165           // meter 
 #define ENCODER_MIN                      -2147483648     // raw
 #define ENCODER_MAX                      2147483648      // raw
