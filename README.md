@@ -32,10 +32,10 @@ Define min and max of encoder, linear velocity and angular velocity<br>
 
 
 # romillion_core.h
-There are a lot of header files, functions and variables.<br><br>
+There are a lot of header files, functions and variables.<br>
 
 ### f401reMap.h
-**f401reMap.h** is the header file of cotex<br>
+**f401reMap.h** is the header file of cortex<br>
 Reference : https://www.instructables.com/id/Quick-Start-to-STM-Nucleo-on-Arduino-IDE/
 
 ### MOTOR
