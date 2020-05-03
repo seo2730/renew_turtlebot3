@@ -1,4 +1,4 @@
-# renew_turtlebot3(Not complete)
+# renew_turtlebot3(Fail to optimization but it was a good experience to analyze turtlebot3 source)
 Using another board instead of OpenCr<br>
 I use cortex-M4 board. You can also use Arduino board. I first tested in Arduino Mega2560
 
@@ -74,6 +74,142 @@ Reference : https://github.com/bolderflight/MPU9250<br>
 
 # romillion.ino
 
+## Motor control
+void motor_speed(float x,float z) : x is linear z is angular<br>
+d_R,d_L : Choose direction(d_R>0,d_L>0:forward, d_R<0,d_L<0:backward, d_R>0,d_L<0:right, d_R<0,d_L>0:left)<br>
 
+    /*******************************************************************************
+    * Motor speed control
+    *******************************************************************************/
+    void motor_speed(float x,float z)
+    {
+      d_R=x*400+z*40;     
+      d_L=x*400-z*40;
+      speed_R=abs(x*400-z*40);     
+      speed_L=abs(x*400+z*40);
 
+      if(d_R>0 & d_L>0)
+      {
+        cw_L_dir= LOW;
+        ccw_L_dir= HIGH;
+        cw_R_dir= LOW; 
+        ccw_R_dir= LOW;
+      }
 
+      else if(d_R>0 & d_L<0)
+      {
+        cw_L_dir= LOW;
+        ccw_L_dir= HIGH;
+        cw_R_dir= LOW; 
+        ccw_R_dir= HIGH;
+      }
+
+      else if(d_R<0 & d_L>0)
+      {
+        cw_L_dir= LOW;
+        ccw_L_dir= LOW;
+        cw_R_dir= LOW; 
+        ccw_R_dir= LOW;
+      }
+
+      else if(d_R<0 & d_L<0)
+      {
+        cw_L_dir= LOW;
+        ccw_L_dir= LOW;
+        cw_R_dir= LOW; 
+        ccw_R_dir= HIGH;
+      }
+
+      else if(d_R==0 & d_L==0)
+      {
+        speed_R=0;
+        speed_L=0;
+      }
+
+     speed_R=constrain(speed_R,0,255);
+     speed_L=constrain(speed_L,0,255);
+    }
+
+Encoder : Calucate encoder
+
+    /*******************************************************************************
+    * Encoder(전체적으로 확인한 뒤 보완할게 있으면 수정)
+    *******************************************************************************/
+    void doEncoderA_R(){
+      if(goal_velocity[LINEAR]==0){
+         encoder0Pos_R=prev_encoder_R;
+      }
+
+      else{
+        if (digitalRead(encoder0PinA_R) == HIGH) { 
+          // check channel B to see which way encoder is turning
+          if (digitalRead(encoder0PinB_R) == LOW) {  
+            encoder0Pos_R = encoder0Pos_R - 1;
+          } 
+
+          else {
+            encoder0Pos_R = encoder0Pos_R + 1;
+          }
+        }
+
+        else   // must be a high-to-low edge on channel A                                       
+        { 
+          // check channel B to see which way encoder is turning  
+          if (digitalRead(encoder0PinB_R) == HIGH) {   
+            encoder0Pos_R = encoder0Pos_R - 1;
+          } 
+
+          else {
+            encoder0Pos_R = encoder0Pos_R + 1;
+          }
+        }
+        prev_encoder_R=encoder0Pos_R;
+      }
+    }
+
+    void doEncoderA_L(){
+      if(goal_velocity[LINEAR]==0){
+         encoder0Pos_L=prev_encoder_L;
+      }
+
+      else{
+        if (digitalRead(encoder0PinA_L) == HIGH) { 
+          // check channel B to see which way encoder is turning
+          if (digitalRead(encoder0PinB_L) == LOW) {  
+            encoder0Pos_L = encoder0Pos_L + 1;
+          } 
+
+          else {
+            encoder0Pos_L = encoder0Pos_L - 1;
+          }
+        }
+
+        else   // must be a high-to-low edge on channel A                                       
+        { 
+          // check channel B to see which way encoder is turning  
+          if (digitalRead(encoder0PinB_L) == HIGH) {   
+            encoder0Pos_L = encoder0Pos_L + 1;
+          } 
+
+          else {
+            encoder0Pos_L = encoder0Pos_L - 1;
+          }
+        }
+        prev_encoder_L=encoder0Pos_L;
+      }
+    }
+
+The location motor code in loop
+
+    if ((t-tTime[0]) >= (1000 / CONTROL_MOTOR_SPEED_FREQUENCY))
+    {
+     updateGoalVelocity();
+     if ((t-tTime[6]) > CONTROL_MOTOR_TIMEOUT) {
+      doMotor_R(cw_R_dir,ccw_R_dir,0);
+      doMotor_L(cw_L_dir,ccw_L_dir,0);
+     } else {
+      doMotor_R(cw_R_dir,ccw_R_dir,speed_R);
+      doMotor_L(cw_L_dir,ccw_L_dir,speed_L);
+     }
+     tTime[0] = t;
+    }
