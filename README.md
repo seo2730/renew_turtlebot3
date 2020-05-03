@@ -1,4 +1,4 @@
-# renew_turtlebot3(Fail to optimization but it was a good experience to analyze turtlebot3 source)
+# renew_turtlebot3<br>(Fail to optimization but it was a good experience to analyze turtlebot3 source)
 Using another board instead of OpenCr<br>
 I use cortex-M4 board. You can also use Arduino board. I first tested in Arduino Mega2560
 
