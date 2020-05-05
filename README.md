@@ -77,7 +77,8 @@ Reference : https://github.com/bolderflight/MPU9250<br>
 
 ## Motor control
 void motor_speed(float x,float z) : x is linear z is angular<br>
-d_R,d_L : Choose direction(d_R>0,d_L>0:forward, d_R<0,d_L<0:backward, d_R>0,d_L<0:right, d_R<0,d_L>0:left)<br>
+d_R,d_L : <br>
+>Choose direction(d_R>0,d_L>0:forward, d_R<0,d_L<0:backward, d_R>0,d_L<0:right, d_R<0,d_L>0:left)<br>
 
     /*******************************************************************************
     * Motor speed control
@@ -131,7 +132,7 @@ d_R,d_L : Choose direction(d_R>0,d_L>0:forward, d_R<0,d_L<0:backward, d_R>0,d_L<
      speed_L=constrain(speed_L,0,255);
     }
 
-Encoder : Calucate encoder
+Encoder : Calucate encoder<br>
 
     /*******************************************************************************
     * Encoder(전체적으로 확인한 뒤 보완할게 있으면 수정)
@@ -200,7 +201,7 @@ Encoder : Calucate encoder
       }
     }
 
-The location motor code in loop
+The location of motor code in loop
 
     if ((t-tTime[0]) >= (1000 / CONTROL_MOTOR_SPEED_FREQUENCY))
     {
